@@ -200,6 +200,11 @@ export default function Home() {
           background-size: 18px 18px;
           transition: background 0.3s;
         }
+        textarea#burmeseNumber::placeholder {
+          color: ${darkMode ? '#969BA3' : '#969BA3'};
+          opacity: 1;
+          transition: color 0.3s;
+        }
       `}</style>
       <button
         ref={buttonRef}
