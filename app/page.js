@@ -7,14 +7,12 @@ import gsap from 'gsap';
 const burmeseDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
 const burmeseNumbers = ['သုည', 'တစ်', 'နှစ်', 'သုံး', 'လေး', 'ငါး', 'ခြောက်', 'ခုနစ်', 'ရှစ်', 'ကိုး'];
 const burmeseUnits = [
-  { value: 10000000, text: 'ကုဋေ' },
-  { value: 1000000, text: 'သန်း' },
   { value: 100000, text: 'သိန်း' },
   { value: 10000, text: 'သောင်း' },
   { value: 1000, text: 'ထောင်' },
   { value: 100, text: 'ရာ' },
   { value: 10, text: 'ဆယ်' },
-  { value: 1, text: 'ခု' },
+  { value: 1, text: '' },
 ];
 const burmeseTextToNum = {
   'တစ်': 1, 'နှစ်': 2, 'သုံး': 3, 'လေး': 4, 'ငါး': 5,
@@ -24,28 +22,39 @@ const burmeseTextToNum = {
 function numberToBurmese(num) {
   if (num === 0) return 'သုည';
   num = Math.abs(num);
-  let result = '';
-  let remaining = num;
 
-  for (let i = 0; i < burmeseUnits.length; i++) {
-    const { value, text } = burmeseUnits[i];
-    if (remaining >= value) {
-      const count = Math.floor(remaining / value);
-      if (count > 0) {
-        // Add number (use 'တစ်' for 1, except for ones place)
-        result += (count > 1 ? burmeseNumbers[count] : (value === 1 ? burmeseNumbers[count] : 'တစ်')) + text;
-        // Add (့) for thousands, hundreds, and tens if there are non-zero lower units
-        const lowerUnits = burmeseUnits.slice(i + 1);
-        const hasLowerUnits = lowerUnits.some(({ value: lowerValue }) => Math.floor(remaining % value / lowerValue) > 0);
-        if (hasLowerUnits && (value === 1000 || value === 100 || value === 10)) {
-          result += '့';
+  function breakdown(n) {
+    let result = '';
+    let remaining = n;
+    for (let i = 0; i < burmeseUnits.length; i++) {
+      const { value, text } = burmeseUnits[i];
+      if (remaining >= value) {
+        const count = Math.floor(remaining / value);
+        if (count > 0) {
+          let countText = '';
+          if (count === 1) {
+            countText = 'တစ်';
+          } else if (count <= 9) {
+            countText = burmeseNumbers[count];
+          } else {
+            countText = breakdown(count); // recursively break down count
+          }
+          // For the lowest unit (value === 1), don't add a unit label
+          result += countText + (value === 1 ? '' : text);
+          // Add (့) for thousands, hundreds, and tens if there are non-zero lower units
+          const lowerUnits = burmeseUnits.slice(i + 1);
+          const hasLowerUnits = lowerUnits.some(({ value: lowerValue }) => Math.floor(remaining % value / lowerValue) > 0);
+          if (hasLowerUnits && (value === 1000 || value === 100 || value === 10)) {
+            result += '့';
+          }
+          remaining %= value;
         }
-        result += ' ';
-        remaining %= value;
       }
     }
+    return result;
   }
-  return result.trim();
+
+  return breakdown(num).trim();
 }
 
 function burmeseToNumber(burmese) {
@@ -233,7 +242,17 @@ export default function Home() {
               type="text"
               value={standardNumber}
               onChange={handleStandardInput}
-              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
+              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+              style={{
+                transition: 'box-shadow 0.3s, border-color 0.3s, background 0.3s, transform 0.2s',
+                willChange: 'box-shadow, border-color, background, transform',
+                minWidth: 0,
+                width: '100%',
+                maxWidth: '100%',
+                overflowX: 'auto',
+                whiteSpace: 'nowrap',
+                fontVariantNumeric: 'tabular-nums',
+              }}
               placeholder="Enter a number"
               aria-describedby="standardNumberHelp"
               aria-invalid={error ? 'true' : 'false'}
@@ -245,12 +264,25 @@ export default function Home() {
           </div>
           <div>
             <label htmlFor="burmeseNumber" className="block text-base font-medium mb-1">Burmese Number</label>
-            <input
+            <textarea
               id="burmeseNumber"
-              type="text"
               value={burmeseNumber}
               onChange={handleBurmeseInput}
-              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
+              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+              style={{
+                transition: 'box-shadow 0.3s, border-color 0.3s, background 0.3s, transform 0.2s',
+                willChange: 'box-shadow, border-color, background, transform',
+                minWidth: 0,
+                width: '100%',
+                maxWidth: '100%',
+                minHeight: '48px',
+                maxHeight: '200px',
+                height: 'auto',
+                fontVariantNumeric: 'tabular-nums',
+                wordBreak: 'break-all',
+                whiteSpace: 'pre-wrap',
+                overflowX: 'auto',
+              }}
               placeholder="Enter Burmese number"
               aria-describedby="burmeseNumberHelp"
               aria-invalid={error ? 'true' : 'false'}
