@@ -1,21 +1,42 @@
 # Burmese Number Converter
 
-A web application built with **Next.js** and **React** to convert numbers between standard Arabic numerals (e.g., 123,456) and Burmese number text (e.g., တစ်သိန်း နှစ်ထောင်). The application supports accurate Burmese number formatting, including the virama (့) for units like thousands (ထောင်), hundreds (ရာ), and tens (ဆယ်) when followed by lower units.
+A web application built with **Next.js** and **React** to convert numbers between standard Arabic numerals (e.g., 123,456) and Burmese number text (e.g., တစ်သိန်း နှစ်ထောင်). The application supports accurate Burmese number formatting, including for units like thousands (ထောင်), hundreds (ရာ), and tens (ဆယ်) when followed by lower units.
 
----
+-----
+
+## Website Link
+
+Experience the Burmese Number Converter live: [Link](https://burmese-number-converter.vercel.app)
+
+-----
+
+## Screenshots
+
+Here are some screenshots of the application in action:
+
+**Light Mode:**
+*A clean interface showcasing the converter in light mode.*
+
+**Dark Mode:**
+*The sleek dark theme of the converter.*
+
+**Conversion Example:**
+*Demonstration of a number conversion from standard to Burmese text.*
+
+-----
 
 ## Features
 
-* **Bidirectional Conversion:** Convert standard numbers to Burmese text and vice versa.
-* **Accurate Burmese Formatting:** Handles Burmese number conventions, such as:
-    * 100 → တစ်ရာ
-    * 110 → တစ်ရာ့ တစ်ဆယ်
-    * 1,110 → တစ်ထောင့် တစ်ရာ့ တစ်ဆယ်
-    * 100,000 → တစ်သိန်း
-* **User-Friendly Interface:** Clean, responsive design with light/dark mode toggle.
-* **Input Validation:** Rejects invalid inputs and provides clear error messages.
-* **Animations:** Smooth GSAP animations for theme switching.
-* **Accessibility:** ARIA attributes for screen reader support.
+  * **Bidirectional Conversion:** Convert standard numbers to Burmese text and vice versa.
+  * **Accurate Burmese Formatting:** Handles Burmese number conventions, such as:
+      * 100 → တစ်ရာ
+      * 110 → တစ်ရာ့ တစ်ဆယ်
+      * 1,110 → တစ်ထောင့် တစ်ရာ့ တစ်ဆယ်
+      * 100,000 → တစ်သိန်း
+  * **User-Friendly Interface:** Clean, responsive design with light/dark mode toggle.
+  * **Input Validation:** Rejects invalid inputs and provides clear error messages.
+  * **Animations:** Smooth GSAP animations for theme switching.
+  * **Accessibility:** ARIA attributes for screen reader support.
 
 ---
 
