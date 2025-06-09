@@ -23,6 +23,36 @@ function numberToBurmese(num) {
   if (num === 0) return 'သုည';
   num = Math.abs(num);
 
+  // Special case: 2,000,000 to 9,000,000, no remainder
+  if (num % 1000000 === 0 && num >= 2000000 && num <= 9000000) {
+    const tens = num / 100000; // e.g., 2,000,000 / 100,000 = 20
+    if (tens % 10 === 0 && tens >= 20 && tens <= 90) {
+      // tens / 10 gives 2, 3, ..., 9
+      const burmeseTens = burmeseNumbers[tens / 10] + 'ဆယ်';
+      return 'သိန်း' + burmeseTens;
+    }
+  }
+
+  // Special case: 20,000,000 to 90,000,000, no remainder
+  if (num % 10000000 === 0 && num >= 10000000 && num <= 90000000) {
+    const hundreds = num / 100000; // e.g., 20,000,000 / 100,000 = 200
+    if (hundreds % 100 === 0 && hundreds >= 100 && hundreds <= 900) {
+      // tens / 10 gives 2, 3, ..., 9
+      const burmeseHundreds = burmeseNumbers[hundreds / 100] + 'ရာ';
+      return 'သိန်း' + burmeseHundreds;
+    }
+  }
+
+  // Special case: 200,000,000 to 900,000,000, no remainder
+  if (num % 100000000 === 0 && num >= 100000000 && num <= 900000000) {
+    const thousands = num / 100000; // e.g., 200,000,000 / 100,000 = 2000
+    if (thousands % 1000 === 0 && thousands >= 1000 && thousands <= 9000) {
+      // tens / 10 gives 2, 3, ..., 9
+      const burmeseThousands = burmeseNumbers[thousands / 1000] + 'ထောင်';
+      return 'သိန်း' + burmeseThousands;
+    }
+  }
+
   function breakdown(n) {
     let result = '';
     let remaining = n;
@@ -275,6 +305,7 @@ export default function Home() {
               onChange={handleBurmeseInput}
               className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
               style={{
+                fontFamily: "'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', var(--font-geist-sans), var(--font-geist-mono), sans-serif",
                 transition: 'box-shadow 0.3s, border-color 0.3s, background 0.3s, transform 0.2s',
                 willChange: 'box-shadow, border-color, background, transform',
                 minWidth: 0,
