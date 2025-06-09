@@ -141,6 +141,7 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const buttonRef = useRef(null);
   const iconRef = useRef(null);
+  const clearButtonRef = useRef(null);
 
   // Animate with GSAP on theme toggle with cleanup
   useEffect(() => {
@@ -175,6 +176,146 @@ export default function Home() {
     return () => ctx.revert(); // Clean up animations
   }, [darkMode]);
 
+  // --- Theme toggle button follow-cursor effect (optimized & throttled) ---
+  useEffect(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    let rafId = null;
+    let target = { x: 0, y: 0 };
+    let current = { x: 0, y: 0 };
+    const maxDist = 60;
+    let inside = false;
+    let ticking = false;
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    const update = () => {
+      current.x = lerp(current.x, target.x, 0.18);
+      current.y = lerp(current.y, target.y, 0.18);
+      gsap.set(btn, { x: current.x, y: current.y });
+      if (Math.abs(current.x - target.x) > 0.5 || Math.abs(current.y - target.y) > 0.5) {
+        rafId = requestAnimationFrame(update);
+      } else {
+        current.x = target.x;
+        current.y = target.y;
+        gsap.set(btn, { x: current.x, y: current.y });
+        rafId = null;
+      }
+    };
+
+    const handleMove = (e) => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const r = btn.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const x = e.clientX - cx;
+        const y = e.clientY - cy;
+        const dist = Math.sqrt(x * x + y * y);
+        if (dist < r.width * 0.7) {
+          inside = true;
+          target.x = Math.max(-maxDist, Math.min(maxDist, x * 0.25));
+          target.y = Math.max(-maxDist, Math.min(maxDist, y * 0.25));
+          if (!rafId) rafId = requestAnimationFrame(update);
+        } else if (inside) {
+          inside = false;
+          target.x = 0;
+          target.y = 0;
+          if (!rafId) rafId = requestAnimationFrame(update);
+        }
+        ticking = false;
+      });
+    };
+    const handleLeave = () => {
+      inside = false;
+      target.x = 0;
+      target.y = 0;
+      if (!rafId) rafId = requestAnimationFrame(update);
+    };
+    window.addEventListener('mousemove', handleMove);
+    btn.addEventListener('mouseleave', handleLeave);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      btn.removeEventListener('mouseleave', handleLeave);
+      if (rafId) cancelAnimationFrame(rafId);
+      gsap.set(btn, { x: 0, y: 0 });
+    };
+  }, []);
+
+  // --- Social floating buttons follow-cursor animation (throttled) ---
+  useEffect(() => {
+    const btns = Array.from(document.querySelectorAll('.social-float-btn'));
+    if (!btns.length) return;
+    let rafId = null;
+    let targets = btns.map(() => ({ x: 0, y: 0 }));
+    let currents = btns.map(() => ({ x: 0, y: 0 }));
+    const maxDist = 40;
+    let insides = btns.map(() => false);
+    let ticking = false;
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+    const update = () => {
+      btns.forEach((btn, i) => {
+        currents[i].x = lerp(currents[i].x, targets[i].x, 0.18);
+        currents[i].y = lerp(currents[i].y, targets[i].y, 0.18);
+        gsap.set(btn, { x: currents[i].x, y: currents[i].y });
+      });
+      if (btns.some((_, i) => Math.abs(currents[i].x - targets[i].x) > 0.5 || Math.abs(currents[i].y - targets[i].y) > 0.5)) {
+        rafId = requestAnimationFrame(update);
+      } else {
+        btns.forEach((btn, i) => {
+          currents[i].x = targets[i].x;
+          currents[i].y = targets[i].y;
+          gsap.set(btn, { x: currents[i].x, y: currents[i].y });
+        });
+        rafId = null;
+      }
+    };
+    const handleMove = (e) => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        btns.forEach((btn, i) => {
+          const r = btn.getBoundingClientRect();
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          const x = e.clientX - cx;
+          const y = e.clientY - cy;
+          const dist = Math.sqrt(x * x + y * y);
+          if (dist < r.width * 0.7) {
+            insides[i] = true;
+            targets[i].x = Math.max(-maxDist, Math.min(maxDist, x * 0.25));
+            targets[i].y = Math.max(-maxDist, Math.min(maxDist, y * 0.25));
+            if (!rafId) rafId = requestAnimationFrame(update);
+          } else if (insides[i]) {
+            insides[i] = false;
+            targets[i].x = 0;
+            targets[i].y = 0;
+            if (!rafId) rafId = requestAnimationFrame(update);
+          }
+        });
+        ticking = false;
+      });
+    };
+    const handleLeave = () => {
+      targets.forEach((t, i) => { t.x = 0; t.y = 0; insides[i] = false; });
+      if (!rafId) rafId = requestAnimationFrame(update);
+    };
+    window.addEventListener('mousemove', handleMove);
+    btns.forEach(btn => btn.addEventListener('mouseleave', handleLeave));
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      btns.forEach(btn => btn.removeEventListener('mouseleave', handleLeave));
+      if (rafId) cancelAnimationFrame(rafId);
+      btns.forEach(btn => gsap.set(btn, { x: 0, y: 0 }));
+    };
+  }, []);
+
   const handleStandardInput = useCallback((e) => {
     const value = e.target.value.replace(/,/g, '');
     if (value === '') {
@@ -188,6 +329,10 @@ export default function Home() {
       return;
     }
     const num = parseInt(value, 10);
+    if (isNaN(num) || num > 999999999) {
+      setError('Please enter a number not greater than 999,999,999');
+      return;
+    }
     setStandardNumber(num.toLocaleString());
     setBurmeseNumber(numberToBurmese(num));
     setError('');
@@ -206,6 +351,30 @@ export default function Home() {
   }, []);
 
   const clearInputs = useCallback(() => {
+    if (clearButtonRef.current) {
+      gsap.fromTo(
+        clearButtonRef.current,
+        { scale: 1, backgroundColor: '#2563eb', color: '#fff', boxShadow: '0 0 0 rgba(0, 0, 0, 0.1)' },
+        {
+          scale: 0.92,
+          backgroundColor: '#fff',
+          color: '#2563eb',
+          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+          duration: 0.12,
+          ease: 'power2.out',
+          yoyo: true,
+          repeat: 1,
+          onComplete: () => {
+            gsap.set(clearButtonRef.current, {
+              scale: 1,
+              backgroundColor: '#2563eb',
+              color: '#fff',
+              boxShadow: '0 0 0 rgba(0, 0, 0, 0.1)'
+            });
+          }
+        }
+      );
+    }
     setStandardNumber('');
     setBurmeseNumber('');
     setError('');
@@ -215,8 +384,41 @@ export default function Home() {
     setDarkMode(prev => !prev);
   }, []);
 
+  const handleCopy = useCallback((value) => {
+    if (value) navigator.clipboard.writeText(value);
+  }, []);
+
+  const handlePasteStandard = useCallback(async () => {
+    const text = await navigator.clipboard.readText();
+    setStandardNumber(text);
+    try {
+      const num = parseInt(text.replace(/,/g, ''), 10);
+      if (!isNaN(num)) {
+        setStandardNumber(num.toLocaleString());
+        setBurmeseNumber(numberToBurmese(num));
+        setError('');
+      } else {
+        setError('Please enter a valid number (e.g., 100,000)');
+      }
+    } catch {
+      setError('Paste failed');
+    }
+  }, []);
+
+  const handlePasteBurmese = useCallback(async () => {
+    const text = await navigator.clipboard.readText();
+    setBurmeseNumber(text);
+    try {
+      const num = burmeseToNumber(text);
+      setStandardNumber(num.toLocaleString());
+      setError('');
+    } catch {
+      setError('Invalid Burmese number format (e.g., တစ်သိန်း နှစ်ထောင်)');
+    }
+  }, []);
+
   return (
-    <div className={`page-bg ${darkMode ? 'bg-gray-900' : 'bg-neutral-50'} min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300`}>
+    <div className={`page-bg ${darkMode ? 'bg-gray-900' : 'bg-neutral-50'} min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden transition-colors duration-300`}>
       <style jsx global>{`
         .page-bg::before {
           content: '';
@@ -238,15 +440,11 @@ export default function Home() {
       `}</style>
       <button
         ref={buttonRef}
-        className={`absolute top-4 left-4 flex items-center justify-center p-0 rounded-full text-3xl transition-colors duration-200 outline-none focus:outline-none overflow-hidden`}
+        className={`fixed top-4 left-4 sm:top-8 sm:left-8 flex items-center justify-center p-0 rounded-full text-2xl sm:text-3xl transition-colors duration-200 outline-none focus:outline-none overflow-hidden z-20 w-14 h-14 sm:w-20 sm:h-20`}
         onClick={handleThemeToggle}
         aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
         title={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
         style={{
-          width: 80,
-          height: 80,
-          minWidth: 80,
-          minHeight: 80,
           border: 'none',
           backgroundColor: darkMode ? '#1f2937' : '#fef9c3',
         }}
@@ -267,82 +465,152 @@ export default function Home() {
           </span>
         </span>
       </button>
-      <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'} p-12 rounded-2xl shadow-2xl w-full max-w-2xl transition-colors duration-300 relative z-10 text-lg mx-auto`}>
-        <h1 className="text-3xl font-bold mb-6 text-center">Burmese Number Converter</h1>
-        <div className="flex flex-col gap-8">
+      <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'} p-4 sm:p-8 md:p-12 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-full sm:max-w-2xl transition-colors duration-300 relative z-10 text-base sm:text-lg mx-auto`}>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Burmese Number Converter</h1>
+        <div className="flex flex-col gap-6 sm:gap-8">
           <div>
-            <label htmlFor="standardNumber" className="block text-base font-medium mb-1">Standard Number</label>
-            <input
-              id="standardNumber"
-              type="text"
-              value={standardNumber}
-              onChange={handleStandardInput}
-              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
-              style={{
-                transition: 'box-shadow 0.3s, border-color 0.3s, background 0.3s, transform 0.2s',
-                willChange: 'box-shadow, border-color, background, transform',
-                minWidth: 0,
-                width: '100%',
-                maxWidth: '100%',
-                overflowX: 'auto',
-                whiteSpace: 'nowrap',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-              placeholder="Enter a number"
-              aria-describedby="standardNumberHelp"
-              aria-invalid={error ? 'true' : 'false'}
-              aria-errormessage={error ? 'error-message' : undefined}
-            />
-            <p id="standardNumberHelp" className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <label htmlFor="standardNumber" className="block text-base sm:text-lg font-medium mb-1">Standard Number</label>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                id="standardNumber"
+                type="text"
+                value={standardNumber}
+                onChange={handleStandardInput}
+                /* maxLength removed to allow full 999,999,999 */
+                className={`block w-full p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+                placeholder="Enter a number"
+                aria-describedby="standardNumberHelp"
+                aria-invalid={error ? 'true' : 'false'}
+                aria-errormessage={error ? 'error-message' : undefined}
+              />
+              <div className="flex flex-row gap-2 mt-2 sm:mt-0">
+                <button
+                  type="button"
+                  onClick={() => handleCopy(standardNumber)}
+                  className="copy-paste-btn"
+                  title="Copy"
+                ><span className="copy-paste-label">C</span></button>
+                <button
+                  type="button"
+                  onClick={handlePasteStandard}
+                  className="copy-paste-btn"
+                  title="Paste"
+                ><span className="copy-paste-label">P</span></button>
+              </div>
+            </div>
+            <p id="standardNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               e.g., 123,456
             </p>
           </div>
           <div>
-            <label htmlFor="burmeseNumber" className="block text-base font-medium mb-1">Burmese Number</label>
-            <textarea
-              id="burmeseNumber"
-              value={burmeseNumber}
-              onChange={handleBurmeseInput}
-              className={`block w-full p-3 text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
-              style={{
-                fontFamily: "'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', var(--font-geist-sans), var(--font-geist-mono), sans-serif",
-                transition: 'box-shadow 0.3s, border-color 0.3s, background 0.3s, transform 0.2s',
-                willChange: 'box-shadow, border-color, background, transform',
-                minWidth: 0,
-                width: '100%',
-                maxWidth: '100%',
-                minHeight: '48px',
-                maxHeight: '200px',
-                height: 'auto',
-                fontVariantNumeric: 'tabular-nums',
-                wordBreak: 'break-all',
-                whiteSpace: 'pre-wrap',
-                overflowX: 'auto',
-              }}
-              placeholder="Enter Burmese number"
-              aria-describedby="burmeseNumberHelp"
-              aria-invalid={error ? 'true' : 'false'}
-              aria-errormessage={error ? 'error-message' : undefined}
-            />
-            <p id="burmeseNumberHelp" className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <label htmlFor="burmeseNumber" className="block text-base sm:text-lg font-medium mb-1">Burmese Number</label>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <textarea
+                id="burmeseNumber"
+                value={burmeseNumber}
+                onChange={handleBurmeseInput}
+                className={`block w-full p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+                style={{
+                  fontFamily: "'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', sans-serif",
+                  fontVariantNumeric: 'tabular-nums',
+                  wordBreak: 'break-all',
+                  whiteSpace: 'pre-wrap',
+                  overflowX: 'auto',
+                }}
+                placeholder="Enter Burmese number"
+                aria-describedby="burmeseNumberHelp"
+                aria-invalid={error ? 'true' : 'false'}
+                aria-errormessage={error ? 'error-message' : undefined}
+              />
+              <div className="flex flex-row gap-2 mt-2 sm:mt-0">
+                <button
+                  type="button"
+                  onClick={() => handleCopy(burmeseNumber)}
+                  className="copy-paste-btn"
+                  title="Copy"
+                ><span className="copy-paste-label">C</span></button>
+                <button
+                  type="button"
+                  onClick={handlePasteBurmese}
+                  className="copy-paste-btn"
+                  title="Paste"
+                ><span className="copy-paste-label">P</span></button>
+              </div>
+            </div>
+            <p id="burmeseNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               e.g., တစ်သိန်း နှစ်ထောင်
             </p>
           </div>
         </div>
         {error && (
-          <p id="error-message" className="mt-6 text-red-600 dark:text-red-400 text-center">
+          <p id="error-message" className="mt-6 text-red-600 dark:text-red-400 text-center text-base sm:text-lg">
             {error}
           </p>
         )}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
+            ref={clearButtonRef}
             onClick={clearInputs}
-            className="flex-1 px-4 py-3 text-lg font-semibold rounded-md bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-base sm:text-lg font-semibold rounded-md bg-blue-600 text-white shadow-md"
           >
             Clear
           </button>
         </div>
       </div>
+      {/* Social Floating Icons */}
+      <div id="social-float" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-row sm:flex-col gap-3 sm:gap-4 z-30">
+        <a
+          href="https://www.facebook.com/profile.php?id=61574923034684" target="_blank" rel="noopener noreferrer"
+          className="social-float-btn group"
+          aria-label="Facebook"
+        >
+          {/* SimpleIcons Facebook */}
+          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 6.019 4.438 10.987 10.125 11.854v-8.385H7.078v-3.47h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.491 0-1.953.925-1.953 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.562 22.987 24 18.019 24 12z" fill="#1877F2" />
+            <path d="M16.671 15.47l.532-3.47h-3.328v-2.25c0-.949.462-1.874 1.953-1.874h1.513V4.979s-1.374-.235-2.686-.235c-2.741 0-4.533 1.662-4.533 4.669v2.586H7.078v3.47h3.047v8.385a12.07 12.07 0 003.75 0v-8.385h2.796z" fill="#fff" />
+          </svg>
+        </a>
+        <a
+          href="https://github.com/Kinosaur" target="_blank" rel="noopener noreferrer"
+          className="social-float-btn group"
+          aria-label="GitHub"
+        >
+          {/* SimpleIcons GitHub */}
+          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <path d="M12 0C5.371 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.237 1.84 1.237 1.07 1.834 2.809 1.304 3.495.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.469-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.553 3.297-1.23 3.297-1.23.653 1.653.242 2.873.119 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.803 5.624-5.475 5.921.43.371.823 1.102.823 2.222v3.293c0 .322.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z" fill="#181717" />
+          </svg>
+        </a>
+        <a
+          href="https://www.linkedin.com/in/kaung-khant-lin-33a477274/" target="_blank" rel="noopener noreferrer"
+          className="social-float-btn group"
+          aria-label="LinkedIn"
+        >
+          {/* SimpleIcons LinkedIn */}
+          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.327-.027-3.037-1.849-3.037-1.851 0-2.132 1.445-2.132 2.939v5.667H9.358V9h3.414v1.561h.049c.476-.899 1.637-1.849 3.37-1.849 3.602 0 4.267 2.368 4.267 5.455v6.285zM5.337 7.433a2.062 2.062 0 01-2.06-2.066c0-1.14.92-2.066 2.06-2.066 1.14 0 2.06.926 2.06 2.066 0 1.14-.92 2.066-2.06 2.066zm1.777 13.019H3.56V9h3.554v11.452z" fill="#0A66C2" />
+          </svg>
+        </a>
+      </div>
+      <style jsx global>{`
+        .social-float-btn {
+          width: 40px;
+          height: 40px;
+          min-width: 40px;
+          min-height: 40px;
+          max-width: 40px;
+          max-height: 40px;
+        }
+        @media (min-width: 640px) {
+          .social-float-btn {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
+            max-width: 48px;
+            max-height: 48px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -29,3 +29,75 @@ body {
     var(--font-geist-sans),
     Arial, Helvetica, sans-serif;
 }
+
+.copy-paste-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.25rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.18s, transform 0.14s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.copy-paste-btn:hover,
+.copy-paste-btn:focus-visible {
+  background: #e0e7ef;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.copy-paste-btn:active {
+  background: #e5e7eb;
+  transform: scale(0.96);
+}
+
+.copy-paste-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  font-family: var(--font-geist-mono), 'Menlo', 'monospace', sans-serif;
+}
+
+.social-float-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.18s, background 0.18s, transform 0.14s;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  z-index: 30;
+}
+
+.social-float-btn:hover,
+.social-float-btn:focus-visible {
+  background: #f3f4f6;
+  box-shadow: 0 4px 18px rgba(59, 130, 246, 0.13);
+  transform: translateY(-2px) scale(1.07);
+}
+
+@media (max-width: 640px) {
+  .social-float-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
