@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import gsap from 'gsap';
-import { ClipboardPaste, Heart } from 'lucide-react';
+import { ClipboardPaste, Heart, Heart as HeartFilled } from 'lucide-react';
 
 // Array-based for easier mapping and iteration
 const burmeseDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
@@ -136,6 +136,7 @@ export default function Home() {
   const [burmeseNumber, setBurmeseNumber] = useState('');
   const [error, setError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+  const [stickyHover, setStickyHover] = useState(false);
   const buttonRef = useRef(null);
   const iconRef = useRef(null);
   const clearButtonRef = useRef(null);
@@ -585,9 +586,20 @@ export default function Home() {
       </main>
       {/* Made with love by Kino sticky note as footer */}
       <footer className="w-full flex items-center justify-center fixed bottom-4 left-0 z-20">
-        <div className="made-by-sticky flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg font-mono text-base sm:text-lg font-semibold bg-yellow-100/90 dark:bg-yellow-300/90 border border-yellow-300 dark:border-yellow-400 text-yellow-900 dark:text-yellow-800" style={{ backdropFilter: 'blur(2px)' }}>
+        <div
+          className="made-by-sticky flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg font-mono text-base sm:text-lg font-semibold bg-yellow-100/90 dark:bg-yellow-300/90 border border-yellow-300 dark:border-yellow-400 text-yellow-900 dark:text-yellow-800"
+          style={{ backdropFilter: 'blur(2px)' }}
+          onMouseEnter={() => setStickyHover(true)}
+          onMouseLeave={() => setStickyHover(false)}
+        >
           <span>made with</span>
-          <span className="inline-flex items-center"><Heart size={20} className="text-red-500 animate-pulse" aria-label="love" /></span>
+          <span className="inline-flex items-center">
+            {stickyHover ? (
+              <HeartFilled size={20} className="text-red-500 animate-pulse" aria-label="love" fill="#ef4444" />
+            ) : (
+              <Heart size={20} className="text-red-500 animate-pulse" aria-label="love" />
+            )}
+          </span>
           <span>by Kino</span>
         </div>
       </footer>
