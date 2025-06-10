@@ -30,49 +30,9 @@ body {
     Arial, Helvetica, sans-serif;
 }
 
-.copy-paste-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 0.25rem;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.18s, transform 0.14s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.copy-paste-btn:hover,
-.copy-paste-btn:focus-visible {
-  background: #e0e7ef;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
-  transform: translateY(-2px) scale(1.04);
-}
-
-.copy-paste-btn:active {
-  background: #e5e7eb;
-  transform: scale(0.96);
-}
-
-.copy-paste-label {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  user-select: none;
-  font-family: var(--font-geist-mono), 'Menlo', 'monospace', sans-serif;
-}
-
 .social-float-btn {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
@@ -95,9 +55,112 @@ body {
   transform: translateY(-2px) scale(1.07);
 }
 
-@media (max-width: 640px) {
+@media (min-width: 640px) {
   .social-float-btn {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.paste-btn {
+  min-width: 3.25rem;
+  min-height: 3.25rem;
+  max-width: 56px;
+  max-height: 56px;
+  height: 100%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
+  background-color: #f0f6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.dark .paste-btn {
+  background-color: #1e293b;
+  color: #bae6fd;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.18);
+}
+
+.paste-btn:hover,
+.paste-btn:focus-visible {
+  background-color: #dbeafe;
+  color: #1e40af;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
+}
+
+.dark .paste-btn:hover,
+.dark .paste-btn:focus-visible {
+  background-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.28);
+}
+
+.paste-btn:active {
+  background-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.dark .paste-btn:active {
+  background-color: #1e40af;
+  color: #fff;
+}
+
+.made-by-sticky {
+  box-shadow: 0 4px 24px 0 rgba(251, 191, 36, 0.18), 0 1.5px 0 0 #fde68a;
+  border-radius: 1rem;
+  border-width: 1.5px;
+  border-style: solid;
+  font-family: var(--font-geist-mono, 'Geist Mono', 'Fira Mono', 'Menlo', 'monospace');
+  background: linear-gradient(135deg, #fef9c3 80%, #fde68a 100%);
+  color: #92400e;
+  position: relative;
+}
+
+.dark .made-by-sticky {
+  background: linear-gradient(135deg, #fde68a 80%, #facc15 100%);
+  color: #713f12;
+  border-color: #facc15;
+}
+
+.made-by-sticky .lucide-heart {
+  vertical-align: middle;
+  margin: 0 0.1em;
+  filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.12));
+}
+
+.made-by-sticky {
+  animation: stickyNoteFloat 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes stickyNoteFloat {
+  0% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  100% {
+    transform: translateY(-6px) rotate(2deg);
+  }
+}
+
+@media (min-width: 640px) {
+  .made-by-sticky {
+    margin-bottom: 0;
+  }
+}
+
+#social-float {
+  bottom: 1.25rem !important;
+}
+
+@media (max-width: 639px) {
+  #social-float {
+    bottom: 112px !important;
   }
 }

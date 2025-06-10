@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { ClipboardPaste, Heart } from 'lucide-react';
 
 // Array-based for easier mapping and iteration
 const burmeseDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
@@ -108,26 +109,22 @@ function burmeseToNumber(burmese) {
     }
   }
 
-  // Handle ones place only if 'ခု' is explicitly present
-  const onesRegex = new RegExp(`([\\u1000-\\u109F]+)?ခု\\s*`);
-  const onesMatch = clean.match(onesRegex);
-  if (onesMatch) {
-    const numText = onesMatch[1] || 'တစ်';
-    const num = burmeseTextToNum[numText];
-    if (num === undefined) {
-      throw new Error('Invalid Burmese number format');
-    }
-    total += num;
-    clean = clean.replace(onesMatch[0], '').trim();
-  }
-
-  // Handle remaining digits if any (e.g., ၁၂၃)
+  // Remove special handling for 'ခု' (ones place)
+  // Instead, after processing all units, if any clean text remains, try to match a Burmese number word (e.g., 'တစ်', 'နှစ်', ...)
   if (clean) {
-    let digits = [...clean].map(ch => burmeseDigits.indexOf(ch));
-    if (digits.every(d => d >= 0)) {
-      total += parseInt(digits.join(''), 10);
+    // Try to match a single Burmese number word (e.g., 'တစ်', 'နှစ်', ...)
+    const num = burmeseTextToNum[clean];
+    if (num !== undefined) {
+      total += num;
+      clean = '';
     } else {
-      throw new Error('Invalid Burmese number format');
+      // Fallback: check for Burmese digits (e.g., ၁၂၃)
+      let digits = [...clean].map(ch => burmeseDigits.indexOf(ch));
+      if (digits.every(d => d >= 0)) {
+        total += parseInt(digits.join(''), 10);
+      } else {
+        throw new Error('Invalid Burmese number format');
+      }
     }
   }
 
@@ -418,7 +415,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className={`page-bg ${darkMode ? 'bg-gray-900' : 'bg-neutral-50'} min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden transition-colors duration-300`}>
+    <div className={`page-bg ${darkMode ? 'bg-gray-900' : 'bg-neutral-50'} min-h-screen flex flex-col justify-between p-2 sm:p-4 relative overflow-hidden transition-colors duration-300`}>
       <style jsx global>{`
         .page-bg::before {
           content: '';
@@ -465,152 +462,135 @@ export default function Home() {
           </span>
         </span>
       </button>
-      <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'} p-4 sm:p-8 md:p-12 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-full sm:max-w-2xl transition-colors duration-300 relative z-10 text-base sm:text-lg mx-auto`}>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Burmese Number Converter</h1>
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <div>
-            <label htmlFor="standardNumber" className="block text-base sm:text-lg font-medium mb-1">Standard Number</label>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <input
-                id="standardNumber"
-                type="text"
-                value={standardNumber}
-                onChange={handleStandardInput}
-                /* maxLength removed to allow full 999,999,999 */
-                className={`block w-full p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
-                placeholder="Enter a number"
-                aria-describedby="standardNumberHelp"
-                aria-invalid={error ? 'true' : 'false'}
-                aria-errormessage={error ? 'error-message' : undefined}
-              />
-              <div className="flex flex-row gap-2 mt-2 sm:mt-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(standardNumber)}
-                  className="copy-paste-btn"
-                  title="Copy"
-                ><span className="copy-paste-label">C</span></button>
-                <button
-                  type="button"
-                  onClick={handlePasteStandard}
-                  className="copy-paste-btn"
-                  title="Paste"
-                ><span className="copy-paste-label">P</span></button>
+      <main className="flex-1 flex flex-col items-center justify-center w-full">
+        <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'} p-4 sm:p-8 md:p-12 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-full sm:max-w-2xl transition-colors duration-300 relative z-10 text-base sm:text-lg mx-auto`}>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Burmese Number Converter</h1>
+          <div className="flex flex-col gap-6 sm:gap-8">
+            <div>
+              <label htmlFor="standardNumber" className="block text-base sm:text-lg font-medium mb-1">Standard Number</label>
+              <div className="flex flex-row items-center gap-2 w-full">
+                <input
+                  id="standardNumber"
+                  type="text"
+                  value={standardNumber}
+                  onChange={handleStandardInput}
+                  className={`flex-1 min-w-0 p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+                  placeholder="Enter a number"
+                  aria-describedby="standardNumberHelp"
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-errormessage={error ? 'error-message' : undefined}
+                />
+                <div className="flex-none ml-2">
+                  <button
+                    type="button"
+                    onClick={handlePasteStandard}
+                    className="paste-btn focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    aria-label="Paste to Standard Number"
+                    title="Paste"
+                  >
+                    <ClipboardPaste size={30} strokeWidth={2.2} aria-hidden="true" focusable="false" />
+                  </button>
+                </div>
               </div>
+              <p id="standardNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                e.g., 123,456
+              </p>
             </div>
-            <p id="standardNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              e.g., 123,456
-            </p>
+            <div>
+              <label htmlFor="burmeseNumber" className="block text-base sm:text-lg font-medium mb-1">Burmese Number</label>
+              <div className="flex flex-row items-center gap-2 w-full">
+                <textarea
+                  id="burmeseNumber"
+                  value={burmeseNumber}
+                  onChange={handleBurmeseInput}
+                  className={`flex-1 min-w-0 p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
+                  style={{
+                    fontFamily: "'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', sans-serif",
+                    fontVariantNumeric: 'tabular-nums',
+                    wordBreak: 'break-all',
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto',
+                  }}
+                  placeholder="Enter Burmese number"
+                  aria-describedby="burmeseNumberHelp"
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-errormessage={error ? 'error-message' : undefined}
+                />
+                <div className="flex-none ml-2">
+                  <button
+                    type="button"
+                    onClick={handlePasteBurmese}
+                    className="paste-btn focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    aria-label="Paste to Burmese Number"
+                    title="Paste"
+                  >
+                    <ClipboardPaste size={30} strokeWidth={2.2} aria-hidden="true" focusable="false" />
+                  </button>
+                </div>
+              </div>
+              <p id="burmeseNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                e.g., တစ်သိန်း နှစ်ထောင်
+              </p>
+            </div>
           </div>
-          <div>
-            <label htmlFor="burmeseNumber" className="block text-base sm:text-lg font-medium mb-1">Burmese Number</label>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <textarea
-                id="burmeseNumber"
-                value={burmeseNumber}
-                onChange={handleBurmeseInput}
-                className={`block w-full p-2 sm:p-3 text-base sm:text-lg rounded-md border focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 resize-y ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'} shadow-sm hover:shadow-md focus:shadow-lg focus:border-blue-400 focus:scale-[1.025]'}`}
-                style={{
-                  fontFamily: "'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', sans-serif",
-                  fontVariantNumeric: 'tabular-nums',
-                  wordBreak: 'break-all',
-                  whiteSpace: 'pre-wrap',
-                  overflowX: 'auto',
-                }}
-                placeholder="Enter Burmese number"
-                aria-describedby="burmeseNumberHelp"
-                aria-invalid={error ? 'true' : 'false'}
-                aria-errormessage={error ? 'error-message' : undefined}
-              />
-              <div className="flex flex-row gap-2 mt-2 sm:mt-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(burmeseNumber)}
-                  className="copy-paste-btn"
-                  title="Copy"
-                ><span className="copy-paste-label">C</span></button>
-                <button
-                  type="button"
-                  onClick={handlePasteBurmese}
-                  className="copy-paste-btn"
-                  title="Paste"
-                ><span className="copy-paste-label">P</span></button>
-              </div>
-            </div>
-            <p id="burmeseNumberHelp" className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              e.g., တစ်သိန်း နှစ်ထောင်
+          {error && (
+            <p id="error-message" className="mt-6 text-red-600 dark:text-red-400 text-center text-base sm:text-lg">
+              {error}
             </p>
+          )}
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button
+              ref={clearButtonRef}
+              onClick={clearInputs}
+              className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-base sm:text-lg font-semibold rounded-md bg-blue-600 text-white shadow-md"
+            >
+              Clear
+            </button>
           </div>
         </div>
-        {error && (
-          <p id="error-message" className="mt-6 text-red-600 dark:text-red-400 text-center text-base sm:text-lg">
-            {error}
-          </p>
-        )}
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <button
-            ref={clearButtonRef}
-            onClick={clearInputs}
-            className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-base sm:text-lg font-semibold rounded-md bg-blue-600 text-white shadow-md"
+        {/* Social Floating Icons */}
+        <div id="social-float" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-row sm:flex-col gap-3 sm:gap-4 z-30">
+          <a
+            href="https://www.facebook.com/profile.php?id=61574923034684" target="_blank" rel="noopener noreferrer"
+            className="social-float-btn group"
+            aria-label="Facebook"
           >
-            Clear
-          </button>
+            {/* SimpleIcons Facebook */}
+            <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+              <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 6.019 4.438 10.987 10.125 11.854v-8.385H7.078v-3.47h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.491 0-1.953.925-1.953 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.562 22.987 24 18.019 24 12z" fill="#1877F2" />
+              <path d="M16.671 15.47l.532-3.47h-3.328v-2.25c0-.949.462-1.874 1.953-1.874h1.513V4.979s-1.374-.235-2.686-.235c-2.741 0-4.533 1.662-4.533 4.669v2.586H7.078v3.47h3.047v8.385a12.07 12.07 0 003.75 0v-8.385h2.796z" fill="#fff" />
+            </svg>
+          </a>
+          <a
+            href="https://github.com/Kinosaur" target="_blank" rel="noopener noreferrer"
+            className="social-float-btn group"
+            aria-label="GitHub"
+          >
+            {/* SimpleIcons GitHub */}
+            <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+              <path d="M12 0C5.371 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.237 1.84 1.237 1.07 1.834 2.809 1.304 3.495.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.469-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.553 3.297-1.23 3.297-1.23.653 1.653.242 2.873.119 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.803 5.624-5.475 5.921.43.371.823 1.102.823 2.222v3.293c0 .322.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z" fill="#181717" />
+            </svg>
+          </a>
+          <a
+            href="https://www.linkedin.com/in/kaung-khant-lin-33a477274/" target="_blank" rel="noopener noreferrer"
+            className="social-float-btn group"
+            aria-label="LinkedIn"
+          >
+            {/* SimpleIcons LinkedIn */}
+            <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.327-.027-3.037-1.849-3.037-1.851 0-2.132 1.445-2.132 2.939v5.667H9.358V9h3.414v1.561h.049c.476-.899 1.637-1.849 3.37-1.849 3.602 0 4.267 2.368 4.267 5.455v6.285zM5.337 7.433a2.062 2.062 0 01-2.06-2.066c0-1.14.92-2.066 2.06-2.066 1.14 0 2.06.926 2.06 2.066 0 1.14-.92 2.066-2.06 2.066zm1.777 13.019H3.56V9h3.554v11.452z" fill="#0A66C2" />
+            </svg>
+          </a>
         </div>
-      </div>
-      {/* Social Floating Icons */}
-      <div id="social-float" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-row sm:flex-col gap-3 sm:gap-4 z-30">
-        <a
-          href="https://www.facebook.com/profile.php?id=61574923034684" target="_blank" rel="noopener noreferrer"
-          className="social-float-btn group"
-          aria-label="Facebook"
-        >
-          {/* SimpleIcons Facebook */}
-          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
-            <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 6.019 4.438 10.987 10.125 11.854v-8.385H7.078v-3.47h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.491 0-1.953.925-1.953 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.562 22.987 24 18.019 24 12z" fill="#1877F2" />
-            <path d="M16.671 15.47l.532-3.47h-3.328v-2.25c0-.949.462-1.874 1.953-1.874h1.513V4.979s-1.374-.235-2.686-.235c-2.741 0-4.533 1.662-4.533 4.669v2.586H7.078v3.47h3.047v8.385a12.07 12.07 0 003.75 0v-8.385h2.796z" fill="#fff" />
-          </svg>
-        </a>
-        <a
-          href="https://github.com/Kinosaur" target="_blank" rel="noopener noreferrer"
-          className="social-float-btn group"
-          aria-label="GitHub"
-        >
-          {/* SimpleIcons GitHub */}
-          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
-            <path d="M12 0C5.371 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.237 1.84 1.237 1.07 1.834 2.809 1.304 3.495.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.469-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.553 3.297-1.23 3.297-1.23.653 1.653.242 2.873.119 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.803 5.624-5.475 5.921.43.371.823 1.102.823 2.222v3.293c0 .322.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z" fill="#181717" />
-          </svg>
-        </a>
-        <a
-          href="https://www.linkedin.com/in/kaung-khant-lin-33a477274/" target="_blank" rel="noopener noreferrer"
-          className="social-float-btn group"
-          aria-label="LinkedIn"
-        >
-          {/* SimpleIcons LinkedIn */}
-          <svg width="24" height="24" className="sm:w-8 sm:h-8 w-6 h-6" viewBox="0 0 24 24" fill="none">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.327-.027-3.037-1.849-3.037-1.851 0-2.132 1.445-2.132 2.939v5.667H9.358V9h3.414v1.561h.049c.476-.899 1.637-1.849 3.37-1.849 3.602 0 4.267 2.368 4.267 5.455v6.285zM5.337 7.433a2.062 2.062 0 01-2.06-2.066c0-1.14.92-2.066 2.06-2.066 1.14 0 2.06.926 2.06 2.066 0 1.14-.92 2.066-2.06 2.066zm1.777 13.019H3.56V9h3.554v11.452z" fill="#0A66C2" />
-          </svg>
-        </a>
-      </div>
-      <style jsx global>{`
-        .social-float-btn {
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
-          min-height: 40px;
-          max-width: 40px;
-          max-height: 40px;
-        }
-        @media (min-width: 640px) {
-          .social-float-btn {
-            width: 48px;
-            height: 48px;
-            min-width: 48px;
-            min-height: 48px;
-            max-width: 48px;
-            max-height: 48px;
-          }
-        }
-      `}</style>
+      </main>
+      {/* Made with love by Kino sticky note as footer */}
+      <footer className="w-full flex items-center justify-center fixed bottom-4 left-0 z-20">
+        <div className="made-by-sticky flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg font-mono text-base sm:text-lg font-semibold bg-yellow-100/90 dark:bg-yellow-300/90 border border-yellow-300 dark:border-yellow-400 text-yellow-900 dark:text-yellow-800" style={{ backdropFilter: 'blur(2px)' }}>
+          <span>made with</span>
+          <span className="inline-flex items-center"><Heart size={20} className="text-red-500 animate-pulse" aria-label="love" /></span>
+          <span>by Kino</span>
+        </div>
+      </footer>
     </div>
   );
 }
